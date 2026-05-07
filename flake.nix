@@ -20,6 +20,7 @@
           buildInputs = with pkgs; [
             claude-code
             gh
+            protobuf
             rustup
           ];
           shellHook = ''
