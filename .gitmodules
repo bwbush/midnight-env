@@ -7,3 +7,6 @@
 [submodule "midnight-node"]
 	path = midnight-node
 	url = git@github.com:midnightntwrk/midnight-node.git
+[submodule "partner-chains"]
+	path = partner-chains
+	url = git@github.com:input-output-hk/partner-chains

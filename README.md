@@ -6,7 +6,7 @@ Known-good, compatible set of midnight node, indexer, and proofserver executable
 
 | Component        | Version      | Repository                                                         |
 |------------------|--------------|--------------------------------------------------------------------|
-| midnight-node    | node-0.22.3  | https://github.com/midnightntwrk/mn4                              |
+| midnight-node    | node-0.22.5  | https://github.com/midnightntwrk/mn4                              |
 | midnight-indexer | v4.3.0       | https://github.com/midnight-ntwrk/midnight-indexer                 |
 | midnight-ledger  | ledger-8.0.3 | https://github.com/midnight-ntwrk/midnight-ledger                  |
 | partner-chains   | v1.8.1       | https://github.com/input-output-hk/partner-chains                  |
@@ -59,7 +59,7 @@ The patch adds a hash-only fallback: if the strict timestamp-filtered lookup ret
 
 Adds a `[patch]` section to `Cargo.toml` redirecting all `partner-chains` git dependencies to the local patched checkout, and updates `Cargo.lock` accordingly.
 
-**Target**: `midnight-node` @ `node-0.22.3`
+**Target**: `midnight-node` @ `node-0.22.5`
 
 **Assumption**: `partner-chains/` is a sibling directory of `midnight-node/`.
 
@@ -79,7 +79,7 @@ Use `run-node.sh` to start a non-validating archive node on preprod.
 bash run-node.sh
 ```
 
-The node requires a Cardano db-sync PostgreSQL instance for partner-chains block validation. Set `DB_SYNC_POSTGRES_CONNECTION_STRING` in the script to point at your instance.
+The node stores chain data in `/data/midnight/preprod/`. It requires a Cardano db-sync PostgreSQL instance for partner-chains block validation. Set `DB_SYNC_POSTGRES_CONNECTION_STRING` in the script to point at your instance.
 
 | Variable | Description |
 |---|---|
@@ -117,7 +117,9 @@ Key environment variables (set in the script):
 | `APP__INFRA__SECRET` | Secret key for wallet session encryption |
 | `APP__INFRA__SPO_NODE__BLOCKFROST_ID` | Blockfrost project ID (leave empty to disable SPO indexer) |
 
-Public RPC endpoints use `wss://` (TLS, port 443):
+When running against a local node, point the indexer at `ws://localhost:9944`. The indexer stores its SQLite databases alongside the node data in `/data/midnight/preprod/`.
+
+Public RPC endpoints (for running without a local node) use `wss://` (TLS, port 443):
 - preprod: `wss://rpc.preprod.midnight.network`
 - preview: `wss://rpc.preview.midnight.network`
 - mainnet: `wss://rpc.midnight.network`
