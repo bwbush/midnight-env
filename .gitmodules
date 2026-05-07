@@ -1,3 +1,6 @@
 [submodule "midnight-indexer"]
 	path = midnight-indexer
 	url = git@github.com:midnightntwrk/midnight-indexer.git
+[submodule "midnight-ledger"]
+	path = midnight-ledger
+	url = git@github.com:midnightntwrk/midnight-ledger.git
