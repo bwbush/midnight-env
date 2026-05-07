@@ -13,8 +13,10 @@ Curate a known-good, compatible set of **midnight node**, **indexer**, and **pro
 
 - Running inside a `nix develop` shell within a Podman container.
 - **Safe to run commands without asking for permission** -- the environment is ephemeral and sandboxed.
+- Claude session sees the repo at `/work`, which is a mount of the host path `/scratch/iohk/midnight-env/`. The user runs commands from the host path. **Never hardcode `/work` in scripts or configs** -- always resolve paths relative to the script or repo root dynamically.
 - Nix flake provides: `claude-code`, `gh`, `rustup`.
 - Dev shell script: `dev-env.sh` (auto-generated nix shell env, do not edit).
+- Use `host.containers.internal` to access services running on the host from inside this container (e.g., `curl http://host.containers.internal:8088/ready`).
 
 ## Repository Structure
 

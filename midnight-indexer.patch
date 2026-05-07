@@ -1,0 +1,32 @@
+diff --git a/indexer-standalone/config.yaml b/indexer-standalone/config.yaml
+index 99be8f3..9a03d0f 100644
+--- a/indexer-standalone/config.yaml
++++ b/indexer-standalone/config.yaml
+@@ -36,6 +36,7 @@ infra:
+ 
+   spo_node:
+     url: "ws://localhost:9944"
++    blockfrost_id: ""
+     reconnect_max_delay: "10s"
+     reconnect_max_attempts: 30
+ 
+diff --git a/indexer-standalone/src/main.rs b/indexer-standalone/src/main.rs
+index c5c4bf8..4ee259e 100644
+--- a/indexer-standalone/src/main.rs
++++ b/indexer-standalone/src/main.rs
+@@ -146,9 +146,15 @@ fn run() -> anyhow::Result<()> {
+             })
+         };
+ 
++        let spo_enabled = !spo_node_config.blockfrost_id.is_empty();
+         let spo_indexer = {
+             let storage = spo_storage::Storage::new(pool.clone());
+             task::spawn(async move {
++                if !spo_enabled {
++                    log::info!("spo-indexer disabled (no blockfrost_id configured)");
++                    std::future::pending::<()>().await;
++                    return Ok(());
++                }
+                 let node = SPOClient::new(spo_node_config.into())
+                     .await
+                     .context("create SPOClient")?;
