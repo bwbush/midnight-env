@@ -1,0 +1,3 @@
+[submodule "midnight-indexer"]
+	path = midnight-indexer
+	url = git@github.com:midnightntwrk/midnight-indexer.git
