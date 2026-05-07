@@ -4,3 +4,6 @@
 [submodule "midnight-ledger"]
 	path = midnight-ledger
 	url = git@github.com:midnightntwrk/midnight-ledger.git
+[submodule "midnight-node"]
+	path = midnight-node
+	url = git@github.com:midnightntwrk/midnight-node.git
