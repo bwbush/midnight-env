@@ -2,7 +2,45 @@
 
 Known-good, compatible set of midnight node, indexer, and proofserver executables packaged as a Podman pod for the mainnet, preprod, and preview networks.
 
-## Compiling
+## Official Docker Images (Recommended)
+
+The official Midnight Docker images work without patches when using the correct `CARDANO_SECURITY_PARAMETER=2160` and the versions from the [compatibility matrix](https://docs.midnight.network/relnotes/support-matrix).
+
+| Network  | Node               | Indexer                      | Proof Server                    |
+|----------|--------------------|------------------------------|---------------------------------|
+| mainnet  | `midnight-node:0.22.1` | `indexer-standalone:4.0.1` | `proof-server:8.0.3`           |
+| preprod  | `midnight-node:0.22.2` | `indexer-standalone:4.0.1` | `proof-server:8.0.3`           |
+| preview  | `midnight-node:0.22.5` | `indexer-standalone:4.0.2` | `proof-server:8.0.3`           |
+
+All images are on `docker.io/midnightntwrk/`.
+
+### Pod YAML Files
+
+| File | Network | Host Ports (RPC / Indexer API / P2P / Prometheus / Proofserver) |
+|------|---------|----------------------------------------------------------------|
+| `midnight-mainnet.yaml` | mainnet | 9945 / 8089 / 30334 / 9616 / 6301 |
+| `midnight-preprod.yaml` | preprod | 9946 / 8090 / 30335 / 9617 / 6302 |
+
+Each pod runs three containers (node, indexer, proofserver) sharing a `/data` volume. The node and indexer communicate over `ws://localhost:9944` within the pod.
+
+```bash
+# Start
+podman kube play midnight-preprod.yaml
+
+# Stop
+podman kube down midnight-preprod.yaml
+
+# Logs
+podman pod logs --follow midnight-preprod
+```
+
+Prerequisites:
+- A Cardano db-sync PostgreSQL instance (update `DB_SYNC_POSTGRES_CONNECTION_STRING` in each YAML)
+- Host data directory created: `mkdir -p preprod` / `mkdir -p mainnet`
+
+## Compiling from Source
+
+For building from source (e.g., for custom patches or development):
 
 | Component        | Version      | Repository                                                         |
 |------------------|--------------|--------------------------------------------------------------------|
@@ -13,63 +51,27 @@ Known-good, compatible set of midnight node, indexer, and proofserver executable
 
 ### midnight-node
 
-The node requires patches to partner-chains to sync with preprod/mainnet (see [Patches](#patches) below). Apply patches first, then build:
-
 ```bash
-cd partner-chains
-git apply ../partner-chains.patch
-
-cd ../midnight-node
-git apply ../midnight-node.patch
-
+cd midnight-node
 cargo build --release -p midnight-node
 ```
 
 ### midnight-indexer
-
-Inside `nix develop`, the standalone indexer builds with:
 
 ```bash
 cd midnight-indexer
 cargo build --release --features standalone
 ```
 
-**Source patch required**: The v4.3.0 SPO indexer unconditionally requires a Blockfrost API key. We patch `indexer-standalone/src/main.rs` to skip the SPO task when `blockfrost_id` is empty, and add the missing `blockfrost_id` field to `indexer-standalone/config.yaml`. See `lessons-learned.md` for details.
-
 ### midnight-proof-server
-
-Inside `nix develop`, the proof server builds with:
 
 ```bash
 cd midnight-ledger
 cargo build --release -p midnight-proof-server
 ```
 
-## Patches
 
-### partner-chains.patch
-
-Midnight nodes fail to sync preprod/mainnet because `get_mc_state_reference` in `sidechain-mc-hash` rejects Cardano anchor blocks whose timestamps fall outside a strict stability window. Genesis-era Midnight blocks reference Cardano blocks that are too old for this window — a fixed property of the committed chain history.
-
-The patch adds a hash-only fallback: if the strict timestamp-filtered lookup returns nothing but the block exists by hash, accept it and log a warning. Diagnostic `WARN` messages show the reference timestamp, stability window, actual block timestamp, and offset.
-
-**Target**: `partner-chains` @ `v1.8.1` (checked out as a sibling directory)
-
-### midnight-node.patch
-
-Adds a `[patch]` section to `Cargo.toml` redirecting all `partner-chains` git dependencies to the local patched checkout, and updates `Cargo.lock` accordingly.
-
-**Target**: `midnight-node` @ `node-0.22.5`
-
-**Assumption**: `partner-chains/` is a sibling directory of `midnight-node/`.
-
-### midnight-indexer.patch
-
-Adds the missing `blockfrost_id` field to `config.yaml` and patches `main.rs` to skip the SPO indexer task when `blockfrost_id` is empty.
-
-**Target**: `midnight-indexer` @ `v4.3.0`
-
-## Running
+## Running from Source
 
 ### Node
 
@@ -79,13 +81,13 @@ Use `run-node.sh` to start a non-validating archive node on preprod.
 bash run-node.sh
 ```
 
-The node stores chain data in `/data/midnight/preprod/`. It requires a Cardano db-sync PostgreSQL instance for partner-chains block validation. Set `DB_SYNC_POSTGRES_CONNECTION_STRING` in the script to point at your instance.
+The node stores chain data in `/data/midnight/preprod/`. It requires a Cardano db-sync PostgreSQL instance for partner-chains block validation.
 
 | Variable | Description |
 |---|---|
 | `CFG_PRESET` | Network preset (`preprod`, `preview`, `mainnet`) |
 | `DB_SYNC_POSTGRES_CONNECTION_STRING` | PostgreSQL connection string for cardano-db-sync |
-| `CARDANO_SECURITY_PARAMETER` | Cardano security parameter (432 for preprod/mainnet) |
+| `CARDANO_SECURITY_PARAMETER` | Cardano security parameter (`2160` for preprod/mainnet) |
 
 Check the current block height:
 
